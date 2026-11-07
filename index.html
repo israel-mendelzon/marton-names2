@@ -687,6 +687,9 @@ details.branch.hidden{display:none}
 }
 .greet-item b{display:block;color:var(--accent);font-size:11px;margin-bottom:1px}
 .greet-empty{font-size:12px;color:var(--muted);font-style:italic}
+.greet-status{margin-top:6px;font-size:13px;font-weight:600}
+.greet-status.ok{color:#2a7a3a}
+.greet-status.err{color:#b23a3a}
 .greet-form{display:flex;flex-direction:column;gap:6px}
 .greet-form input{
   font-family:'Assistant',sans-serif;font-size:13px;border:1px solid var(--line);
@@ -2178,12 +2181,19 @@ document.getElementById('panel-events').addEventListener('submit', async e=>{
   if(!name || !message) return;
   const submitBtn = form.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
+  const panel = document.getElementById('greetPanel-' + pkey);
+  let statusEl = panel && panel.querySelector('.greet-status');
+  if(panel && !statusEl){
+    statusEl = document.createElement('div');
+    statusEl.className = 'greet-status';
+    panel.appendChild(statusEl);
+  }
+  if(statusEl){ statusEl.textContent = 'שולח…'; statusEl.className = 'greet-status'; }
   try{
     const res = await sendSheetAction({action:'greet', PersonKey: pkey, Name: name, Message: message});
     if(res && res.ok){
       try{ localStorage.setItem('martonGreeterName', name); }catch(err){}
       (GREETINGS[pkey] = GREETINGS[pkey] || []).push({name, message});
-      const panel = document.getElementById('greetPanel-' + pkey);
       const listEl = panel && panel.querySelector('.greet-list');
       if(listEl){
         const empty = listEl.querySelector('.greet-empty');
@@ -2198,8 +2208,14 @@ document.getElementById('panel-events').addEventListener('submit', async e=>{
       const toggleBtn = document.querySelector(`.greet-toggle[data-pkey="${CSS.escape(pkey)}"]`);
       if(toggleBtn) toggleBtn.textContent = `💬 ברכות (${GREETINGS[pkey].length})`;
       msgInput.value = '';
+      if(statusEl){ statusEl.textContent = '✓ הברכה נשלחה — תודה!'; statusEl.className = 'greet-status ok'; setTimeout(()=>{ if(statusEl) statusEl.textContent=''; }, 4000); }
+    } else {
+      const errText = (res && res.error) ? res.error : 'השליחה נכשלה — נסו שוב בעוד רגע';
+      if(statusEl){ statusEl.textContent = '⚠ ' + errText; statusEl.className = 'greet-status err'; }
     }
-  }catch(err){ /* שקט — אפשר לנסות שוב */ }
+  }catch(err){
+    if(statusEl){ statusEl.textContent = '⚠ אין חיבור — בדקו את האינטרנט ונסו שוב'; statusEl.className = 'greet-status err'; }
+  }
   finally{ submitBtn.disabled = false; }
 });
 
