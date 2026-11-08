@@ -2,7 +2,7 @@
    מטמון "app shell" לפתיחה מהירה ולעבודה אופליין.
    נתוני הגיליון (script.google.com) לעולם לא נשמרים במטמון — תמיד מהרשת, כדי להישאר עדכניים.
    קוד האתר עצמו (index.html) — קודם מהרשת (עדכונים מגיעים מיד), מטמון רק כגיבוי אופליין. */
-const CACHE = 'marton-app-v3-greet';
+const CACHE = 'marton-app-v4-sort';
 const ASSETS = [
   './',
   './index.html',
