@@ -2232,10 +2232,12 @@ function greetBlockHTML(id, personLabel){
   </span>`;
 }
 
-document.getElementById('panel-events').addEventListener('click', e=>{
+/* מאזינים על הדוקומנט — הברכה מוצגת גם בבלון במסך הראשי */
+document.addEventListener('click', e=>{
   const toggle = e.target.closest('.greet-toggle');
   if(toggle){
-    const panel = document.getElementById('greetPanel-' + toggle.dataset.pkey);
+    const wrap = toggle.closest('.greet-wrap');
+    const panel = wrap && wrap.querySelector('.greet-panel');
     if(panel) panel.classList.toggle('hidden');
     return;
   }
@@ -2255,7 +2257,7 @@ document.getElementById('panel-events').addEventListener('click', e=>{
     }
   }
 });
-document.getElementById('panel-events').addEventListener('submit', async e=>{
+document.addEventListener('submit', async e=>{
   const form = e.target.closest('.greet-form');
   if(!form) return;
   e.preventDefault();
@@ -2267,7 +2269,8 @@ document.getElementById('panel-events').addEventListener('submit', async e=>{
   if(!name || !message) return;
   const submitBtn = form.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
-  const panel = document.getElementById('greetPanel-' + pkey);
+  const formWrap = form.closest('.greet-wrap');
+  const panel = formWrap && formWrap.querySelector('.greet-panel');
   let statusEl = panel && panel.querySelector('.greet-status');
   if(panel && !statusEl){
     statusEl = document.createElement('div');
@@ -2280,19 +2283,22 @@ document.getElementById('panel-events').addEventListener('submit', async e=>{
     if(res && res.ok){
       try{ localStorage.setItem('martonGreeterName', name); }catch(err){}
       (GREETINGS[pkey] = GREETINGS[pkey] || []).push({name, message});
-      const listEl = panel && panel.querySelector('.greet-list');
-      if(listEl){
-        const empty = listEl.querySelector('.greet-empty');
-        if(empty) empty.remove();
-        const item = document.createElement('div');
-        item.className = 'greet-item';
-        const b = document.createElement('b');
-        b.textContent = name + ':';
-        item.append(b, document.createTextNode(' ' + message));
-        listEl.appendChild(item);
-      }
-      const toggleBtn = document.querySelector(`.greet-toggle[data-pkey="${CSS.escape(pkey)}"]`);
-      if(toggleBtn) toggleBtn.textContent = `💬 ברכות (${GREETINGS[pkey].length})`;
+      /* מעדכנים את כל ההופעות של אותו pkey (גם בכרטיס האירועים וגם בבלון המסך הראשי) */
+      document.querySelectorAll(`.greet-toggle[data-pkey="${CSS.escape(pkey)}"]`).forEach(btn => {
+        btn.textContent = `💬 ברכות (${GREETINGS[pkey].length})`;
+        const wrap = btn.closest('.greet-wrap');
+        const listEl = wrap && wrap.querySelector('.greet-list');
+        if(listEl){
+          const empty = listEl.querySelector('.greet-empty');
+          if(empty) empty.remove();
+          const item = document.createElement('div');
+          item.className = 'greet-item';
+          const b = document.createElement('b');
+          b.textContent = name + ':';
+          item.append(b, document.createTextNode(' ' + message));
+          listEl.appendChild(item);
+        }
+      });
       msgInput.value = '';
       if(statusEl){ statusEl.textContent = '✓ הברכה נשלחה — תודה!'; statusEl.className = 'greet-status ok'; setTimeout(()=>{ if(statusEl) statusEl.textContent=''; }, 4000); }
     } else {
