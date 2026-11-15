@@ -2486,6 +2486,9 @@ function buildEvents(){
         ${famLine}
         ${metaLine}
         ${annBlessing}
+        <div class="today-actions">
+          ${e.id!=null ? greetBlockHTML(String(e.id)+'-an', `${p1} ו${p2}`) : ''}
+        </div>
       </div>`;
     }).join('');
     document.getElementById('todayContent').innerHTML = birthdayRows + annivRows;
