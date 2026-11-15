@@ -2474,10 +2474,18 @@ function buildEvents(){
       const nameLine = `💍 ${esc(p1)} ♥ ${esc(p2)}${years} ${eventEditBtnHTML(e.id)}${eventAddChildBtnHTML(e.id)}`;
       const famLine = e.fam ? `<div class="today-fam-line">${esc(e.fam)}</div>` : '';
       const metaLine = e.parent ? `<div class="today-meta-line">${esc(e.parent)}</div>` : '';
+      const annBlessing = `<div class="bday-blessing">${[
+        'מזל טוב ליום הנישואין!',
+        'שתזכו לאריכות ימים ושנים טובות,',
+        'בבריאות, שמחה ונחת מכל יוצאי חלציכם.',
+        'באהבה רבה',
+        'שבט המרטונים'
+      ].map(l=>`<div>${l}</div>`).join('')}</div>`;
       return `<div class="today-row">
         <div class="today-name-line">${nameLine}</div>
         ${famLine}
         ${metaLine}
+        ${annBlessing}
       </div>`;
     }).join('');
     document.getElementById('todayContent').innerHTML = birthdayRows + annivRows;
