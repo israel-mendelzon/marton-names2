@@ -468,6 +468,9 @@ summary:hover .b-actions .edit-dot, .b-actions .edit-dot:focus-visible{opacity:1
 .kids-label{font-size:12px;color:var(--muted);letter-spacing:1.5px;margin:6px 0 2px}
 .kid>.row .nm::before{content:"•";color:var(--accent);margin-inline-end:8px}
 .kids .kids{margin-inline-start:12px}
+.kids-wrap[hidden]{display:none}
+.kids-toggle{margin:6px 0 2px;padding:4px 12px;border-radius:999px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.kids-toggle:hover{background:var(--accent-soft)}
 .row.hidden,.unit.hidden,.kid.hidden{display:none}
 details.branch.hidden{display:none}
 
@@ -1845,7 +1848,7 @@ function kidHTML(p, fam){
   let h = `<div class="kid">` + rowHTML(p.n, p.d, '', '', f, p.dd, editBtnHTML(p));
   if(p.s) h += rowHTML(p.s.n, p.s.d, '', p.s.r, f, p.s.dd);
   if(p.c && p.c.length){
-    h += `<div class="kids">` + p.c.map(k=>kidHTML(k, f)).join('') + `</div>`;
+    h += kidsToggleHTML(p.c.length) + `<div class="kids-wrap" hidden><div class="kids">` + p.c.map(k=>kidHTML(k, f)).join('') + `</div></div>`;
   }
   return h + `</div>`;
 }
@@ -1855,9 +1858,30 @@ function unitHTML(p, fam){
   let h = `<div class="unit">` + rowHTML(p.n, p.d, 'head', '', f, p.dd, editBtnHTML(p));
   if(p.s) h += rowHTML(p.s.n, p.s.d, '', p.s.r, f, p.s.dd);
   if(p.c && p.c.length){
-    h += `<div class="kids-label">ילדיהם</div><div class="kids">` + p.c.map(k=>kidHTML(k, f)).join('') + `</div>`;
+    h += kidsToggleHTML(p.c.length) + `<div class="kids-wrap" hidden><div class="kids-label">ילדיהם</div><div class="kids">` + p.c.map(k=>kidHTML(k, f)).join('') + `</div></div>`;
   }
   return h + `</div>`;
+}
+
+/* ילדים נפתחים רק בלחיצה על הכפתור של הזוג */
+function kidsToggleHTML(n){
+  return `<button type="button" class="kids-toggle" aria-expanded="false">👶 ילדיהם (${n}) ▾</button>`;
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.kids-toggle');
+  if(!btn) return;
+  const wrap = btn.nextElementSibling;
+  if(!wrap) return;
+  wrap.hidden = !wrap.hidden;
+  btn.setAttribute('aria-expanded', String(!wrap.hidden));
+  btn.textContent = btn.textContent.replace(/[▾▴]$/, wrap.hidden ? '▾' : '▴');
+});
+function setKidsOpen(open){
+  document.querySelectorAll('.kids-wrap').forEach(w => { w.hidden = !open; });
+  document.querySelectorAll('.kids-toggle').forEach(b => {
+    b.setAttribute('aria-expanded', String(open));
+    b.textContent = b.textContent.replace(/[▾▴]$/, open ? '▴' : '▾');
+  });
 }
 
 /* ---------- render ---------- */
@@ -1932,6 +1956,7 @@ searchEl.addEventListener('input', () => {
   document.querySelectorAll('.row.hit').forEach(r=>r.classList.remove('hit'));
 
   if(!q){
+    setKidsOpen(false);
     branches.forEach((b,i)=>{
       b.classList.remove('hidden');
       b.open = (i===0);
@@ -1954,6 +1979,12 @@ searchEl.addEventListener('input', () => {
         if(matches(r.dataset.name, tokens)){
           unitHas = true; found++;
           r.classList.add('hit');
+          /* פותחים את רשימות הילדים שמכילות את התוצאה, כדי שהיא תיראה */
+          for(let w = r.closest('.kids-wrap'); w; w = w.parentElement.closest('.kids-wrap')){
+            w.hidden = false;
+            const t = w.previousElementSibling;
+            if(t && t.classList.contains('kids-toggle')) t.setAttribute('aria-expanded','true');
+          }
         }
       });
       u.classList.toggle('hidden', !unitHas && !headHit);
@@ -1968,8 +1999,8 @@ searchEl.addEventListener('input', () => {
 });
 
 /* ---------- open / close all ---------- */
-document.getElementById('openAll').onclick = ()=>document.querySelectorAll('details.branch').forEach(d=>d.open=true);
-document.getElementById('closeAll').onclick = ()=>document.querySelectorAll('details.branch').forEach(d=>d.open=false);
+document.getElementById('openAll').onclick = ()=>{ document.querySelectorAll('details.branch').forEach(d=>d.open=true); setKidsOpen(true); };
+document.getElementById('closeAll').onclick = ()=>{ document.querySelectorAll('details.branch').forEach(d=>d.open=false); setKidsOpen(false); };
 
 /* ---------- print ---------- */
 function gematria(num){
